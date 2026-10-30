@@ -78,6 +78,29 @@ Výsledok pre sadu 20260930:
 Súčet výmer parciel (886,86 km²) sedí s plochou okresu (886,83 km²). Polia VFR a ich mapovanie na tabuľky sú
 v [docs/vfr-schema.md](docs/vfr-schema.md).
 
+## Mapa
+
+<http://localhost:8080> (Chrome, Firefox; na telefóne spodný panel namiesto bočného).
+
+- Pri štarte je v zábere celý okres s hranicami a názvami katastrálnych území. Parcely sa zobrazia od zoomu 13,
+  ich čísla od zoomu 17.
+- Klik na parcelu otvorí detail: číslo, KÚ, obec, výmera, druh pozemku, spôsob využitia, stavby na pozemku,
+  odkazy do Nahlížení do KN (vlastníci) a do VDP.
+- Odkaz na parcelu sa dá zdieľať: `http://localhost:8080/#parcel=1755256604`. Tlačidlo Späť funguje, `Esc`
+  zavrie detail.
+- Hľadanie: katastrálne územie (s našepkávaním) a číslo, napr. `Jičín` + `st. 1868/26`.
+- Podklad: OpenStreetMap alebo ortofoto ČÚZK (voľba sa pamätá v prehliadači).
+
+Frontend nemá build krok: [public/index.html](public/index.html), [public/assets/app.js](public/assets/app.js)
+(ES modul), [public/assets/app.css](public/assets/app.css). Externé zdroje (všetky overené, vracajú 200 a CORS):
+
+| Zdroj | Na čo |
+|---|---|
+| `unpkg.com/maplibre-gl@5.24.0` | MapLibre GL JS 5.24.0, pripnutá verzia s kontrolou integrity (SRI) |
+| `tile.openstreetmap.org` | podklad OpenStreetMap; pre lokálny vývoj a ukážku, pri reálnej prevádzke by bol potrebný vlastný zdroj dlaždíc ([pravidlá](https://operations.osmfoundation.org/policies/tiles/)) |
+| `ags.cuzk.gov.cz/…/ORTOFOTO_WM/MapServer/tile/{z}/{y}/{x}` | ortofoto ČÚZK (pozor: y pred x) |
+| `demotiles.maplibre.org/font/…` | písmo pre popisky (Noto Sans, aj česká diakritika) |
+
 ## API
 
 | Endpoint | Čo vráti |
@@ -86,7 +109,8 @@ v [docs/vfr-schema.md](docs/vfr-schema.md).
 | `GET /api/parcels/{id}` | detail parcely: KÚ, obec, výmera, druh pozemku, spôsob využitia, stavby, bod a bbox (WGS 84), odkazy do Nahlížení do KN a VDP |
 | `GET /api/search?ku=Jičín&cislo=st. 1868/26` | parcely podľa KÚ (názov alebo kód) a čísla, najviac 10 |
 | `GET /api/ku?q=jič` | KÚ, ktorých názov obsahuje text (našepkávanie), najviac 10 |
-| `GET /api/boundaries.geojson` | hranice okresu, obcí a KÚ (zjednodušené, WGS 84) |
+| `GET /tiles/parcels.json` | TileJSON vrstvy parciel: URL dlaždíc s dátumom sady (`?v=20260930`), rozsah zoomov, hranice okresu |
+| `GET /api/boundaries.geojson` | hranice okresu, obcí a KÚ (zjednodušené, WGS 84) a bod pre popisok každého KÚ |
 | `GET /api/health` | stav aplikácie a databázy |
 
 ```bash
@@ -122,6 +146,10 @@ docker compose exec php composer cs      # kontrola štýlu (PER-CS); composer c
 Po zmene PHP kódu treba `docker compose restart php`: OPcache nekontroluje časy súborov, lebo každá kontrola
 na bind mounte z disku Windowsu stojí ~9 ms na súbor. Testy a CLI skripty vidia zmeny hneď.
 
+Po zmene kódu, ktorý kreslí dlaždice alebo hranice, treba zmazať aj ich cache (je verzovaná dátumom dát, nie
+kódu): `docker compose exec -u www-data php php bin/clear-cache.php --all`. Zmeny v `public/` (HTML, JS, CSS)
+sa prejavia po obnovení stránky, nginx ich posiela s `Cache-Control: no-cache`.
+
 ## Štruktúra
 
 ```
@@ -130,7 +158,7 @@ data/         zoznam obcí okresu; data/raw = stiahnuté VFR (volume)
 db/           init/ = SQL pri vytvorení databázy, transform.sql = staging → tabuľky aplikácie
 docker/       Dockerfile a konfigurácia PHP-FPM, nginx a GDAL
 docs/         zápisník rozhodnutí, časový log, schéma VFR
-public/       front controller (index.php) a statický frontend
+public/       front controller (index.php) a frontend (index.html, assets/app.js, assets/app.css)
 src/          PHP kód (namespace Parcely\, PSR-4): Http, Controller (bez SQL), Repository a Tile/TileRenderer
               (jediné miesta so SQL), Tile (súradnice, cache), Domain (DTO, číslo parcely), Cli, Vfr, Download, Import
 tests/        PHPUnit testy

@@ -79,6 +79,15 @@ final class TileCacheTest extends TestCase
         self::assertDirectoryExists($this->directory . '/not-a-data-set', 'unknown folders are left alone');
     }
 
+    public function testClearAllDeletesTheCurrentDataSetToo(): void
+    {
+        $cache = new TileCache($this->directory);
+        $cache->remember('20260930', 'boundaries.geojson', static fn(): string => '{}');
+
+        self::assertSame(['20260930'], $cache->clearExcept(null));
+        self::assertDirectoryDoesNotExist($this->directory . '/20260930');
+    }
+
     public function testRejectsPathTraversal(): void
     {
         $this->expectException(\InvalidArgumentException::class);

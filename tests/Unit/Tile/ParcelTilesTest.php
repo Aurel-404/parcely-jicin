@@ -51,6 +51,16 @@ final class ParcelTilesTest extends TestCase
         self::assertFalse($this->tiles->mayContainParcels(TileCoordinate::of(16, 35516, 22108)));
     }
 
+    public function testTileJsonDescribesTheLayer(): void
+    {
+        $tileJson = $this->tiles->tileJson('20260930');
+
+        self::assertSame(['/tiles/parcels/{z}/{x}/{y}.pbf?v=20260930'], $tileJson['tiles']);
+        self::assertSame(ParcelTiles::MIN_ZOOM, $tileJson['minzoom']);
+        self::assertSame(TileCoordinate::MAX_ZOOM, $tileJson['maxzoom']);
+        self::assertSame([15.104228, 50.275293, 15.741565, 50.546965], $tileJson['bounds']);
+    }
+
     private static function jicinAt(int $zoom): TileCoordinate
     {
         $shift = 16 - $zoom;

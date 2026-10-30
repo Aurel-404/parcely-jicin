@@ -22,6 +22,14 @@ final readonly class TileController
     ) {}
 
     /**
+     * GET /tiles/parcels.json: TileJSON of the parcel layer; revalidated on every page load (it is tiny).
+     */
+    public function tileJson(): Response
+    {
+        return Response::json($this->tiles->tileJson($this->meta->vfrDate()), 200, ['Cache-Control' => 'no-cache']);
+    }
+
+    /**
      * GET /tiles/parcels/{z}/{x}/{y}.pbf. An empty tile is 200 with an empty body, like any other tile: the
      * same headers and caching, and MapLibre reads it as a tile without features.
      *

@@ -44,6 +44,7 @@ final readonly class Application
 
         $this->router = new Router();
         $this->router->get('/api/health', $health->check(...));
+        $this->router->get('/tiles/parcels.json', $tiles->tileJson(...));
         $this->router->get('/tiles/parcels/{z}/{x}/{y}.pbf', $tiles->parcels(...));
         $this->router->get('/api/parcels/{id}', $parcel->detail(...));
         $this->router->get('/api/search', $search->parcels(...));

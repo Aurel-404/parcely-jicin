@@ -23,7 +23,9 @@ final readonly class BoundaryRepository
     public function __construct(private Database $db) {}
 
     /**
-     * One GeoJSON FeatureCollection in WGS 84 with properties type (okres | obec | ku), kod and nazev.
+     * One GeoJSON FeatureCollection in WGS 84 with properties type (okres | obec | ku | ku_label), kod and nazev.
+     * ku_label is one point inside each cadastral area for its name: a polygon label would repeat in every
+     * map tile the area touches.
      *
      * The cadastral areas are simplified together as a coverage, so neighbours keep one shared border (no gaps,
      * no double lines); municipalities and the district are unions of them, so their borders lie exactly on
@@ -49,6 +51,8 @@ final readonly class BoundaryRepository
                     SELECT 2, 'obec', kod, nazev, geom FROM obec_simple
                     UNION ALL
                     SELECT 3, 'ku', kod, nazev, geom FROM ku_simple
+                    UNION ALL
+                    SELECT 4, 'ku_label', kod, nazev, ST_PointOnSurface(geom) FROM ku_simple
                 )
                 SELECT json_build_object(
                     'type', 'FeatureCollection',

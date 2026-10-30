@@ -28,6 +28,14 @@ final class EnvelopeTest extends TestCase
         self::assertTrue($a->expand(1)->contains(new Envelope(-1, -1, 11, 11)));
     }
 
+    public function testToLonLatMatchesPostgis(): void
+    {
+        // ST_Transform(ST_SetSRID(ST_MakePoint(…), 3857), 4326) in PostGIS 3.6 for the district extent.
+        $lonLat = (new Envelope(1681395, 6494089, 1752343, 6541545))->toLonLat();
+
+        self::assertEqualsWithDelta([15.104228, 50.275293, 15.741565, 50.546965], $lonLat, 1e-6);
+    }
+
     public function testRejectsInvertedEnvelope(): void
     {
         $this->expectException(\InvalidArgumentException::class);
