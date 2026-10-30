@@ -35,7 +35,9 @@ final class Router
     }
 
     /**
-     * @throws HttpException 404 when no route matches the path, 405 when it matches with another method
+     * Throws HttpException 404 when no route matches the path, 405 when it matches with another method;
+     * exceptions of the handler pass through (no @throws tag, so static analysis does not treat the list
+     * as complete).
      */
     public function dispatch(Request $request): Response
     {

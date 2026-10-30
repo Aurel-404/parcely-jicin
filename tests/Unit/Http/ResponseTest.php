@@ -18,6 +18,33 @@ final class ResponseTest extends TestCase
         self::assertSame('{"ku":"Jičín","url":"https://nahlizenidokn.cuzk.cz/"}', $response->body);
     }
 
+    public function testFileResponseSendsTheFile(): void
+    {
+        $path = (string) tempnam(sys_get_temp_dir(), 'tile');
+        file_put_contents($path, 'mvt');
+
+        $response = Response::file($path, 'application/vnd.mapbox-vector-tile', ['ETag' => '"x"'])->withHeader('X-Cache', 'HIT');
+        ob_start();
+        $response->send();
+        $sent = ob_get_clean();
+        unlink($path);
+
+        self::assertSame('mvt', $sent);
+        self::assertSame(
+            ['X-Cache' => 'HIT', 'Content-Type' => 'application/vnd.mapbox-vector-tile', 'Content-Length' => '3', 'ETag' => '"x"'],
+            $response->headers,
+        );
+    }
+
+    public function testNotModifiedHasNoBody(): void
+    {
+        $response = Response::notModified(['ETag' => '"x"']);
+
+        self::assertSame(304, $response->status);
+        self::assertSame('', $response->body);
+        self::assertNull($response->file);
+    }
+
     public function testWithHeaderReturnsNewInstance(): void
     {
         $original = new Response();
