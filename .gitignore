@@ -1,0 +1,23 @@
+# Local configuration
+.env
+
+# Composer
+/vendor/
+
+# Downloaded and generated data (Docker volumes raw-data and app-var, re-creatable via bin/ scripts)
+/data/raw/
+/var/
+
+# Tool caches
+.phpunit.cache/
+.php-cs-fixer.cache
+
+# Assignment and plan (private materials, not part of the solution)
+zadanie*.png
+/Parcely*.html
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,10 @@
+# Files are mounted into Linux containers, so keep LF everywhere (also on Windows checkouts).
+# Plain "* text=auto" would check out CRLF on Windows (core.autocrlf=true): PHP-CS-Fixer would flag
+# every file and shell scripts would fail in the container with "/bin/sh^M: bad interpreter".
+* text=auto eol=lf
+*.sh text eol=lf
+
+*.png binary
+*.jpg binary
+*.pbf binary
+*.zip binary

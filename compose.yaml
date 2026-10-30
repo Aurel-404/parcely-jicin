@@ -1,0 +1,75 @@
+name: parcely-jicin
+
+x-db-env: &db-env
+  DB_HOST: db
+  DB_PORT: "5432"
+  DB_NAME: ${DB_NAME:-parcely}
+  DB_USER: ${DB_USER:-parcely}
+  DB_PASSWORD: ${DB_PASSWORD:?Copy .env.example to .env first}
+
+services:
+  db:
+    image: postgis/postgis:18-3.6
+    environment:
+      POSTGRES_DB: ${DB_NAME:-parcely}
+      POSTGRES_USER: ${DB_USER:-parcely}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Copy .env.example to .env first}
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:${DB_PORT_HOST:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Code is bind-mounted from the Windows disk; heavy I/O (raw data, tile cache, logs) lives in named
+  # volumes inside WSL 2, because bind mounts from the Windows file system are much slower.
+  php:
+    build: docker/php
+    environment:
+      <<: *db-env
+      APP_ENV: ${APP_ENV:-prod}
+    volumes:
+      - .:/app
+      - raw-data:/app/data/raw
+      - app-var:/app/var
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: nginx:1.28.3-alpine
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:80"
+    volumes:
+      - ./public:/app/public:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+
+  # One-off tool for importing RÚIAN VFR data (GML driver + RÚIAN .gfs templates + PostgreSQL driver):
+  #   docker compose run --rm gdal ogr2ogr ...
+  gdal:
+    image: ghcr.io/osgeo/gdal:ubuntu-small-3.13.3
+    profiles: [tools]
+    working_dir: /app
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: ${DB_NAME:-parcely}
+      PGUSER: ${DB_USER:-parcely}
+      PGPASSWORD: ${DB_PASSWORD:?Copy .env.example to .env first}
+    volumes:
+      - .:/app
+      - raw-data:/app/data/raw
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  raw-data:
+  app-var:
