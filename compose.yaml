@@ -51,10 +51,10 @@ services:
     depends_on:
       - php
 
-  # One-off tool for importing RÚIAN VFR data (GML driver + RÚIAN .gfs templates + PostgreSQL driver):
-  #   docker compose run --rm gdal ogr2ogr ...
+  # One-off tool for importing RÚIAN VFR data (GML driver + RÚIAN .gfs templates + PostgreSQL driver + psql):
+  #   docker compose run --rm gdal bin/import.sh
   gdal:
-    image: ghcr.io/osgeo/gdal:ubuntu-small-3.13.3
+    build: docker/gdal
     profiles: [tools]
     working_dir: /app
     environment:

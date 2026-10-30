@@ -10,6 +10,7 @@ use Parcely\Vfr\MunicipalityCsv;
 use Parcely\Vfr\VfrDate;
 use Parcely\Vfr\VfrLocator;
 use Parcely\Vfr\VfrSource;
+use Parcely\Vfr\Xml;
 
 /**
  * Downloads the state-wide basic VFR file (ST_UZSZ) and writes the municipalities of one district to CSV.
@@ -37,7 +38,7 @@ final readonly class ListMunicipalitiesCommand
 
             $file = $this->source->stateBasic($date);
             $this->console->info(sprintf('Reading %s …', $file->name));
-            $units = $this->reader->read(self::xmlEntryUri($this->downloader->fetch($file)->path));
+            $units = $this->reader->read(Xml::zipEntryUri($this->downloader->fetch($file)->path));
 
             $districtCode = $units->districtCode($districtName);
             $municipalities = $units->municipalitiesOf($districtCode);
@@ -56,20 +57,5 @@ final readonly class ListMunicipalitiesCommand
 
             return 1;
         }
-    }
-
-    /**
-     * Each VFR archive contains exactly one XML file; read it straight from the ZIP without extracting.
-     */
-    private static function xmlEntryUri(string $zipPath): string
-    {
-        $zip = new \ZipArchive();
-        if ($zip->open($zipPath, \ZipArchive::RDONLY) !== true || $zip->count() !== 1) {
-            throw new \RuntimeException(sprintf('%s: expected a ZIP with one XML file', $zipPath));
-        }
-        $entry = (string) $zip->getNameIndex(0);
-        $zip->close();
-
-        return sprintf('zip://%s#%s', $zipPath, $entry);
     }
 }
