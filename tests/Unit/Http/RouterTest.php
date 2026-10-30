@@ -52,6 +52,15 @@ final class RouterTest extends TestCase
         $this->dispatch('GET', '/tiles/parcels/14/abc/5543.pbf');
     }
 
+    public function testDefaultPlaceholderBeforeLiteralSuffix(): void
+    {
+        $router = new Router();
+        $router->get('/tiles/{z}/{x}/{y}.pbf', static fn(Request $request, array $params): Response => new Response(body: implode(',', $params)));
+
+        // Anything up to ".pbf" is captured, so the controller can answer 400 instead of 404 for "abc".
+        self::assertSame('14,abc,5526', $router->dispatch(new Request('GET', '/tiles/14/abc/5526.pbf'))->body);
+    }
+
     public function testLiteralDotIsNotARegexWildcard(): void
     {
         $this->expectNotFound();

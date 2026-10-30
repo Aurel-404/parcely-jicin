@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Parcely\Tests\Integration;
 
-use Parcely\Config;
 use Parcely\Database\Database;
 use Parcely\Import\CodeListWriter;
-use PHPUnit\Framework\TestCase;
 
 /**
- * Writes to a throw-away table in the real database (inside the php container).
+ * Writes to a throw-away table in the real database.
  */
-final class CodeListWriterTest extends TestCase
+final class CodeListWriterTest extends IntegrationTestCase
 {
     private const string TABLE = 'cis_phpunit_test';
 
@@ -20,10 +18,7 @@ final class CodeListWriterTest extends TestCase
 
     protected function setUp(): void
     {
-        if (getenv('DB_HOST') === false) {
-            self::markTestSkipped('DB_HOST is not set - run the tests inside the php container.');
-        }
-        $this->db = Database::fromConfig(Config::fromEnvironment(getenv()));
+        $this->db = self::database();
         $this->db->pdo()->exec('DROP TABLE IF EXISTS ' . self::TABLE);
     }
 

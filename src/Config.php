@@ -19,6 +19,8 @@ final readonly class Config
         public string $dbUser,
         public string $dbPassword,
         public string $vfrBaseUrl = VfrSource::DEFAULT_BASE_URL,
+        // Tile cache (var/tiles) and logs; volume app-var in Docker.
+        public string $varDirectory = __DIR__ . '/../var',
     ) {}
 
     /**
@@ -34,6 +36,8 @@ final readonly class Config
             dbUser: self::required($env, 'DB_USER'),
             dbPassword: self::required($env, 'DB_PASSWORD'),
             vfrBaseUrl: ($env['VFR_BASE_URL'] ?? '') !== '' ? $env['VFR_BASE_URL'] : VfrSource::DEFAULT_BASE_URL,
+            // Without "..": resolving /app/src/.. would touch the slow bind mount on every cache file access.
+            varDirectory: dirname(__DIR__) . '/var',
         );
     }
 

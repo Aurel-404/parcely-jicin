@@ -4,26 +4,19 @@ declare(strict_types=1);
 
 namespace Parcely\Tests\Integration;
 
-use Parcely\Config;
 use Parcely\Database\Database;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Checks the result of bin/import.sh in the real database; skipped until the data is imported.
  */
-final class ImportedDataTest extends TestCase
+final class ImportedDataTest extends IntegrationTestCase
 {
     private Database $db;
 
     protected function setUp(): void
     {
-        if (getenv('DB_HOST') === false) {
-            self::markTestSkipped('DB_HOST is not set - run the tests inside the php container.');
-        }
-        $this->db = Database::fromConfig(Config::fromEnvironment(getenv()));
-        if ($this->db->fetchValue("SELECT to_regclass('public.parcel')") === null) {
-            self::markTestSkipped('No imported data - run bin/import.sh.');
-        }
+        $this->db = self::database();
+        self::requireImportedData($this->db);
     }
 
     public function testWholeDistrictIsImported(): void
