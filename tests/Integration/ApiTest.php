@@ -64,6 +64,14 @@ final class ApiTest extends IntegrationTestCase
         self::assertSame(sprintf('"%s-14-8892-5526"', $this->vfrDate()), $hit->headers['ETag']);
     }
 
+    public function testTileJsonVersionsTileUrlsByDataSet(): void
+    {
+        $tileJson = $this->json('/tiles/parcels.json');
+
+        self::assertSame(['/tiles/parcels/{z}/{x}/{y}.pbf?v=' . $this->vfrDate()], $tileJson['tiles']);
+        self::assertSame('no-cache', $this->get('/tiles/parcels.json')->headers['Cache-Control']);
+    }
+
     public function testKnownEtagGives304(): void
     {
         $etag = sprintf('"%s-14-8892-5526"', $this->vfrDate());
@@ -173,8 +181,9 @@ final class ApiTest extends IntegrationTestCase
             self::assertIsString($type);
             $types[$type] = ($types[$type] ?? 0) + 1;
         }
+        $cadastralAreas = $this->db->fetchValue('SELECT count(*) FROM ku');
         self::assertSame(
-            ['okres' => 1, 'obec' => $this->db->fetchValue('SELECT count(*) FROM obec'), 'ku' => $this->db->fetchValue('SELECT count(*) FROM ku')],
+            ['okres' => 1, 'obec' => $this->db->fetchValue('SELECT count(*) FROM obec'), 'ku' => $cadastralAreas, 'ku_label' => $cadastralAreas],
             $types,
         );
         self::assertSame('HIT', $this->get('/api/boundaries.geojson')->headers['X-Cache']);

@@ -42,6 +42,27 @@ final readonly class ParcelTiles
         return $tile->envelope()->expand($buffer)->intersects($this->district);
     }
 
+    /**
+     * TileJSON 3.0 of the layer. The map takes the zoom range and bounds from here, so MIN_ZOOM lives only in
+     * this class. The data set date in the tile URL makes browsers load new tiles right after an import
+     * instead of keeping cached ones for up to a day.
+     *
+     * @return array<string, mixed>
+     */
+    public function tileJson(string $vfrDate): array
+    {
+        return [
+            'tilejson' => '3.0.0',
+            'name' => 'parcels',
+            'tiles' => ['/tiles/parcels/{z}/{x}/{y}.pbf?v=' . $vfrDate],
+            'minzoom' => self::MIN_ZOOM,
+            'maxzoom' => TileCoordinate::MAX_ZOOM,
+            'bounds' => $this->district->toLonLat(),
+            'vector_layers' => [['id' => 'parcels', 'fields' => ['label' => 'String', 'druh_pozemku_kod' => 'Number']]],
+            'attribution' => 'Parcely: RÚIAN © ČÚZK (CC BY 4.0)',
+        ];
+    }
+
     public function get(TileCoordinate $tile, string $vfrDate): CachedFile
     {
         return $this->cache->remember($vfrDate, 'parcels/' . $tile->path() . '.pbf', fn(): string => $this->renderer->parcels($tile));

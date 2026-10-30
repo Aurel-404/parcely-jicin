@@ -37,13 +37,14 @@ final readonly class TileCache
     }
 
     /**
-     * Deletes all versions except $vfrDate; returns the deleted ones.
+     * Deletes all versions except $vfrDate (null = all, after a change of the rendering code); returns the
+     * deleted ones.
      *
      * @return list<string>
      */
-    public function clearExcept(string $vfrDate): array
+    public function clearExcept(?string $vfrDate): array
     {
-        $keep = self::version($vfrDate);
+        $keep = $vfrDate === null ? null : self::version($vfrDate);
         $deleted = [];
         foreach (glob($this->directory . '/*', GLOB_ONLYDIR) ?: [] as $folder) {
             $version = basename($folder);

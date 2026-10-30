@@ -1,12 +1,51 @@
 <!doctype html>
-<html lang="cs">
+<html lang="sk">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Mapa všetkých parciel okresu Jičín (RÚIAN, ČÚZK)">
   <title>Parcely okresu Jičín</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 3l6-2 8 3-2 11-9-2z' fill='%23c2410c'/%3E%3C/svg%3E">
+  <!-- MapLibre GL JS 5.24.0 (UMD build), pinned; integrity = SHA-384 of the files on unpkg. -->
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
+        integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous">
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js" defer
+          integrity="sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp" crossorigin="anonymous"></script>
+  <!-- Module scripts run after deferred ones, so maplibregl exists when app.js starts. -->
+  <script src="/assets/app.js" type="module"></script>
 </head>
 <body>
-  <h1>Parcely okresu Jičín</h1>
-  <p>Backend běží. Mapa přibude ve fázi 05. Stav: <a href="/api/health">/api/health</a></p>
+  <div id="map" aria-label="Mapa parciel okresu Jičín"></div>
+
+  <form id="search" class="search" role="search" autocomplete="off" novalidate>
+    <div class="search-row">
+      <input id="search-ku" name="ku" list="ku-options" placeholder="Katastrálne územie" aria-label="Katastrálne územie"
+             enterkeyhint="next">
+      <datalist id="ku-options"></datalist>
+      <input id="search-number" name="cislo" placeholder="Číslo, napr. st. 123/4" aria-label="Číslo parcely"
+             enterkeyhint="search">
+      <button type="submit" class="search-submit" aria-label="Hľadať parcelu">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p id="search-status" class="search-status" role="status" aria-live="polite" hidden></p>
+    <ul id="search-results" class="search-results" hidden></ul>
+  </form>
+
+  <div id="basemaps" class="basemaps" role="group" aria-label="Podklad mapy">
+    <button type="button" data-basemap="osm" aria-pressed="true">Mapa</button>
+    <button type="button" data-basemap="orto" aria-pressed="false">Ortofoto</button>
+  </div>
+
+  <p id="zoom-hint" class="zoom-hint" hidden>Priblížte mapu pre zobrazenie parciel</p>
+
+  <aside id="panel" class="panel" aria-labelledby="panel-title" hidden>
+    <button type="button" class="panel-close" aria-label="Zavrieť detail parcely">&times;</button>
+    <div id="panel-content"></div>
+  </aside>
+
+  <div id="fatal" class="fatal" role="alert" hidden></div>
+  <noscript><div class="fatal">Mapa potrebuje JavaScript.</div></noscript>
 </body>
 </html>

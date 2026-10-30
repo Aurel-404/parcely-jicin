@@ -36,4 +36,18 @@ final readonly class Envelope
     {
         return new self($this->minX - $margin, $this->minY - $margin, $this->maxX + $margin, $this->maxY + $margin);
     }
+
+    /**
+     * The same rectangle in WGS 84 degrees (inverse spherical Mercator), rounded to 6 decimals (~0.1 m).
+     *
+     * @return array{float, float, float, float} west, south, east, north
+     */
+    public function toLonLat(): array
+    {
+        $radius = 6378137.0;
+        $lon = static fn(float $x): float => round(rad2deg($x / $radius), 6);
+        $lat = static fn(float $y): float => round(rad2deg(atan(sinh($y / $radius))), 6);
+
+        return [$lon($this->minX), $lat($this->minY), $lon($this->maxX), $lat($this->maxY)];
+    }
 }
