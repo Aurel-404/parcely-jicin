@@ -32,6 +32,7 @@ services:
     environment:
       <<: *db-env
       APP_ENV: ${APP_ENV:-prod}
+      VFR_BASE_URL: ${VFR_BASE_URL:-}
     volumes:
       - .:/app
       - raw-data:/app/data/raw

@@ -2,10 +2,11 @@ FROM composer:2.9.8 AS composer
 
 FROM php:8.3.36-fpm-alpine3.24
 
-# pdo_pgsql for PostGIS, opcache for performance; build dependencies are removed afterwards.
-RUN apk add --no-cache libpq \
-    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS libpq-dev \
-    && docker-php-ext-install -j"$(nproc)" pdo_pgsql \
+# pdo_pgsql for PostGIS, zip for validating and streaming downloaded VFR archives, opcache for performance.
+# Build dependencies are removed afterwards.
+RUN apk add --no-cache libpq libzip \
+    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS libpq-dev libzip-dev \
+    && docker-php-ext-install -j"$(nproc)" pdo_pgsql zip \
     && docker-php-ext-enable opcache \
     && apk del .build-deps
 

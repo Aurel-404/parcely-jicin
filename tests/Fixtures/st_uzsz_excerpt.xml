@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vf:VymennyFormat xmlns:vf="urn:cz:isvs:ruian:schemas:VymennyFormatTypy:v1">
+  <!-- Excerpt of 20260930_ST_UZSZ.xml (RÚIAN VFR, source ČÚZK, CC BY 4.0): elements copied verbatim, only flags, coats of arms and declensions removed. -->
+  <vf:Data>
+    <vf:Okresy>
+      <vf:Okres xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:oki="urn:cz:isvs:ruian:schemas:OkresIntTypy:v1" xmlns:vci="urn:cz:isvs:ruian:schemas:VuscIntTypy:v1" gml:id="OK.3604">
+        <oki:Kod>3604</oki:Kod>
+        <oki:Nazev>Jičín</oki:Nazev>
+        <oki:Vusc>
+          <vci:Kod>86</vci:Kod>
+        </oki:Vusc>
+        <oki:PlatiOd>2026-05-07T00:00:00</oki:PlatiOd>
+        <oki:IdTransakce>7898928</oki:IdTransakce>
+        <oki:GlobalniIdNavrhuZmeny>5162314</oki:GlobalniIdNavrhuZmeny>
+        <oki:NutsLau>CZ0522</oki:NutsLau>
+        <oki:Geometrie>
+          <oki:DefinicniBod>
+            <gml:Point gml:id="DOK.3604" srsName="urn:ogc:def:crs:EPSG::5514" srsDimension="2">
+              <gml:pos>-671975.00 -1013076.00</gml:pos>
+            </gml:Point>
+          </oki:DefinicniBod>
+        </oki:Geometrie>
+        <oki:DatumVzniku>1960-04-11T00:00:00</oki:DatumVzniku>
+      </vf:Okres>
+      <vf:Okres xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:oki="urn:cz:isvs:ruian:schemas:OkresIntTypy:v1" xmlns:vci="urn:cz:isvs:ruian:schemas:VuscIntTypy:v1" gml:id="OK.3605">
+        <oki:Kod>3605</oki:Kod>
+        <oki:Nazev>Náchod</oki:Nazev>
+        <oki:Vusc>
+          <vci:Kod>86</vci:Kod>
+        </oki:Vusc>
+        <oki:PlatiOd>2025-10-21T00:00:00</oki:PlatiOd>
+        <oki:IdTransakce>7244940</oki:IdTransakce>
+        <oki:GlobalniIdNavrhuZmeny>4659827</oki:GlobalniIdNavrhuZmeny>
+        <oki:NutsLau>CZ0523</oki:NutsLau>
+        <oki:Geometrie>
+          <oki:DefinicniBod>
+            <gml:Point gml:id="DOK.3605" srsName="urn:ogc:def:crs:EPSG::5514" srsDimension="2">
+              <gml:pos>-615005.00 -1022182.00</gml:pos>
+            </gml:Point>
+          </oki:DefinicniBod>
+        </oki:Geometrie>
+        <oki:DatumVzniku>1960-04-11T00:00:00</oki:DatumVzniku>
+      </vf:Okres>
+    </vf:Okresy>
+    <vf:Obce>
+      <vf:Obec xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:obi="urn:cz:isvs:ruian:schemas:ObecIntTypy:v1" xmlns:oki="urn:cz:isvs:ruian:schemas:OkresIntTypy:v1" xmlns:pui="urn:cz:isvs:ruian:schemas:PouIntTypy:v1" xmlns:com="urn:cz:isvs:ruian:schemas:CommonTypy:v1" gml:id="OB.569089">
+        <obi:Kod>569089</obi:Kod>
+        <obi:Nazev>Maleč</obi:Nazev>
+        <obi:StatusKod>2</obi:StatusKod>
+        <obi:Okres>
+          <oki:Kod>3601</oki:Kod>
+        </obi:Okres>
+        <obi:Pou>
+          <pui:Kod>1970</pui:Kod>
+        </obi:Pou>
+        <obi:PlatiOd>2024-09-17T00:00:00</obi:PlatiOd>
+        <obi:IdTransakce>5962744</obi:IdTransakce>
+        <obi:GlobalniIdNavrhuZmeny>3713183</obi:GlobalniIdNavrhuZmeny>
+        <obi:NutsLau>CZ0631569089</obi:NutsLau>
+        <obi:Geometrie>
+          <obi:DefinicniBod>
+            <gml:MultiPoint gml:id="DOB.569089" srsName="urn:ogc:def:crs:EPSG::5514" srsDimension="2">
+              <gml:pointMembers>
+                <gml:Point gml:id="DOB.569089.1">
+                  <gml:pos>-657903.00 -1089346.00</gml:pos>
+                </gml:Point>
+              </gml:pointMembers>
+            </gml:MultiPoint>
+          </obi:DefinicniBod>
+        </obi:Geometrie>
+      </vf:Obec>
+      <vf:Obec xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:obi="urn:cz:isvs:ruian:schemas:ObecIntTypy:v1" xmlns:oki="urn:cz:isvs:ruian:schemas:OkresIntTypy:v1" xmlns:pui="urn:cz:isvs:ruian:schemas:PouIntTypy:v1" xmlns:com="urn:cz:isvs:ruian:schemas:CommonTypy:v1" gml:id="OB.572659">
+        <obi:Kod>572659</obi:Kod>
+        <obi:Nazev>Jičín</obi:Nazev>
+        <obi:StatusKod>3</obi:StatusKod>
+        <obi:Okres>
+          <oki:Kod>3604</oki:Kod>
+        </obi:Okres>
+        <obi:Pou>
+          <pui:Kod>2178</pui:Kod>
+        </obi:Pou>
+        <obi:PlatiOd>2023-03-16T00:00:00</obi:PlatiOd>
+        <obi:IdTransakce>4847037</obi:IdTransakce>
+        <obi:GlobalniIdNavrhuZmeny>3030253</obi:GlobalniIdNavrhuZmeny>
+        <obi:NutsLau>CZ0522572659</obi:NutsLau>
+        <obi:Geometrie>
+          <obi:DefinicniBod>
+            <gml:MultiPoint gml:id="DOB.572659" srsName="urn:ogc:def:crs:EPSG::5514" srsDimension="2">
+              <gml:pointMembers>
+                <gml:Point gml:id="DOB.572659.1">
+                  <gml:pos>-671975.00 -1013076.00</gml:pos>
+                </gml:Point>
+              </gml:pointMembers>
+            </gml:MultiPoint>
+          </obi:DefinicniBod>
+        </obi:Geometrie>
+        <obi:DatumVzniku>1869-01-01T00:00:00</obi:DatumVzniku>
+      </vf:Obec>
+      <vf:Obec xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:obi="urn:cz:isvs:ruian:schemas:ObecIntTypy:v1" xmlns:pui="urn:cz:isvs:ruian:schemas:PouIntTypy:v1" xmlns:com="urn:cz:isvs:ruian:schemas:CommonTypy:v1" gml:id="OB.554782">
+        <obi:Kod>554782</obi:Kod>
+        <obi:Nazev>Praha</obi:Nazev>
+        <obi:StatusKod>5</obi:StatusKod>
+        <obi:Pou>
+          <pui:Kod>19</pui:Kod>
+        </obi:Pou>
+        <obi:PlatiOd>2024-04-10T00:00:00</obi:PlatiOd>
+        <obi:IdTransakce>5464793</obi:IdTransakce>
+        <obi:GlobalniIdNavrhuZmeny>3354680</obi:GlobalniIdNavrhuZmeny>
+        <obi:CleneniSMRozsahKod>2</obi:CleneniSMRozsahKod>
+        <obi:CleneniSMTypKod>1</obi:CleneniSMTypKod>
+        <obi:NutsLau>CZ0100554782</obi:NutsLau>
+        <obi:Geometrie>
+          <obi:DefinicniBod>
+            <gml:MultiPoint gml:id="DOB.554782" srsName="urn:ogc:def:crs:EPSG::5514" srsDimension="2">
+              <gml:pointMembers>
+                <gml:Point gml:id="DOB.554782.1">
+                  <gml:pos>-743100.00 -1043300.00</gml:pos>
+                </gml:Point>
+              </gml:pointMembers>
+            </gml:MultiPoint>
+          </obi:DefinicniBod>
+        </obi:Geometrie>
+        <obi:DatumVzniku>1869-01-01T00:00:00</obi:DatumVzniku>
+      </vf:Obec>
+      <vf:Obec xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:obi="urn:cz:isvs:ruian:schemas:ObecIntTypy:v1" xmlns:oki="urn:cz:isvs:ruian:schemas:OkresIntTypy:v1" xmlns:pui="urn:cz:isvs:ruian:schemas:PouIntTypy:v1" xmlns:com="urn:cz:isvs:ruian:schemas:CommonTypy:v1" gml:id="OB.572926">
+        <obi:Kod>572926</obi:Kod>
+        <obi:Nazev>Hořice</obi:Nazev>
+        <obi:StatusKod>3</obi:StatusKod>
+        <obi:Okres>
+          <oki:Kod>3604</oki:Kod>
+        </obi:Okres>
+        <obi:Pou>
+          <pui:Kod>2160</pui:Kod>
+        </obi:Pou>
+        <obi:PlatiOd>2025-06-20T00:00:00</obi:PlatiOd>
+        <obi:IdTransakce>6831471</obi:IdTransakce>
+        <obi:GlobalniIdNavrhuZmeny>4378018</obi:GlobalniIdNavrhuZmeny>
+        <obi:NutsLau>CZ0522572926</obi:NutsLau>
+        <obi:Geometrie>
+          <obi:DefinicniBod>
+            <gml:MultiPoint gml:id="DOB.572926" srsName="urn:ogc:def:crs:EPSG::5514" srsDimension="2">
+              <gml:pointMembers>
+                <gml:Point gml:id="DOB.572926.1">
+                  <gml:pos>-653169.00 -1023363.00</gml:pos>
+                </gml:Point>
+              </gml:pointMembers>
+            </gml:MultiPoint>
+          </obi:DefinicniBod>
+        </obi:Geometrie>
+      </vf:Obec>
+    </vf:Obce>
+  </vf:Data>
+</vf:VymennyFormat>

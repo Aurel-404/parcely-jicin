@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Parcely;
 
+use Parcely\Vfr\VfrSource;
+
 /**
  * Application configuration read from environment variables (set by Docker Compose from .env).
  */
@@ -16,6 +18,7 @@ final readonly class Config
         public string $dbName,
         public string $dbUser,
         public string $dbPassword,
+        public string $vfrBaseUrl = VfrSource::DEFAULT_BASE_URL,
     ) {}
 
     /**
@@ -30,6 +33,7 @@ final readonly class Config
             dbName: self::required($env, 'DB_NAME'),
             dbUser: self::required($env, 'DB_USER'),
             dbPassword: self::required($env, 'DB_PASSWORD'),
+            vfrBaseUrl: ($env['VFR_BASE_URL'] ?? '') !== '' ? $env['VFR_BASE_URL'] : VfrSource::DEFAULT_BASE_URL,
         );
     }
 
