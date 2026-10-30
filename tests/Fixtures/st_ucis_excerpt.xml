@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vf:SpecialniVymennyFormat xmlns:vf="urn:cz:isvs:ruian:schemas:SpecialniVymennyFormatTypy:v1">
+  <!-- Excerpt of 20261003_ST_UCIS.xml (RÚIAN VFR, source ČÚZK, CC BY 4.0): elements copied verbatim, only fewer items per code list. -->
+  <vf:Data>
+    <vf:TypyStavebnichObjektu xmlns:vfc="urn:cz:isvs:ruian:schemas:VFCiselnikyTypy:v1">
+      <vfc:TypStavebnihoObjektu>
+        <vfc:Kod>1</vfc:Kod>
+        <vfc:Nazev>budova s číslem popisným</vfc:Nazev>
+        <vfc:Zkratka>budova s č.p.</vfc:Zkratka>
+        <vfc:Popis>Budova s číslem popisným</vfc:Popis>
+      </vfc:TypStavebnihoObjektu>
+      <vfc:TypStavebnihoObjektu>
+        <vfc:Kod>2</vfc:Kod>
+        <vfc:Nazev>budova s číslem evidenčním</vfc:Nazev>
+        <vfc:Zkratka>budova s č.ev.</vfc:Zkratka>
+        <vfc:Popis>Budova s číslem evidenčním</vfc:Popis>
+      </vfc:TypStavebnihoObjektu>
+      <vfc:TypStavebnihoObjektu>
+        <vfc:Kod>3</vfc:Kod>
+        <vfc:Nazev>budova bez č.p. i č.ev.</vfc:Nazev>
+        <vfc:Zkratka>budova bez č.p. /č.ev.</vfc:Zkratka>
+        <vfc:Popis>Budova bez čísla popisného či evidenčního</vfc:Popis>
+      </vfc:TypStavebnihoObjektu>
+    </vf:TypyStavebnichObjektu>
+    <vf:StatusObci xmlns:vfc="urn:cz:isvs:ruian:schemas:VFCiselnikyTypy:v1">
+      <vfc:StatusObce>
+        <vfc:Kod>1</vfc:Kod>
+        <vfc:Nazev>Vojenský újezd</vfc:Nazev>
+        <vfc:Zkratka>Vojenský újezd</vfc:Zkratka>
+        <vfc:Popis>Vojenský újezd</vfc:Popis>
+      </vfc:StatusObce>
+    </vf:StatusObci>
+    <vf:DruhyCislovaniParcel xmlns:vfc="urn:cz:isvs:ruian:schemas:VFCiselnikyTypy:v1">
+      <vfc:DruhCislovaniParcel>
+        <vfc:Kod>1</vfc:Kod>
+        <vfc:Nazev>Stavební</vfc:Nazev>
+        <vfc:Zkratka>Stavební</vfc:Zkratka>
+        <vfc:Popis>Stavební</vfc:Popis>
+      </vfc:DruhCislovaniParcel>
+      <vfc:DruhCislovaniParcel>
+        <vfc:Kod>2</vfc:Kod>
+        <vfc:Nazev>Pozemková</vfc:Nazev>
+        <vfc:Zkratka>Pozemková</vfc:Zkratka>
+        <vfc:Popis>Pozemková</vfc:Popis>
+      </vfc:DruhCislovaniParcel>
+    </vf:DruhyCislovaniParcel>
+    <vf:DruhyPozemku xmlns:vfc="urn:cz:isvs:ruian:schemas:VFCiselnikyTypy:v1">
+      <vfc:DruhPozemku>
+        <vfc:Kod>2</vfc:Kod>
+        <vfc:Nazev>orná půda</vfc:Nazev>
+        <vfc:Popis>orná půda</vfc:Popis>
+      </vfc:DruhPozemku>
+      <vfc:DruhPozemku>
+        <vfc:Kod>3</vfc:Kod>
+        <vfc:Nazev>chmelnice</vfc:Nazev>
+        <vfc:Popis>chmelnice</vfc:Popis>
+      </vfc:DruhPozemku>
+      <vfc:DruhPozemku>
+        <vfc:Kod>4</vfc:Kod>
+        <vfc:Nazev>vinice</vfc:Nazev>
+        <vfc:Popis>vinice</vfc:Popis>
+      </vfc:DruhPozemku>
+    </vf:DruhyPozemku>
+  </vf:Data>
+</vf:SpecialniVymennyFormat>

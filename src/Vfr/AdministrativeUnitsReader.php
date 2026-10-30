@@ -35,18 +35,18 @@ final class AdministrativeUnitsReader
                     continue;
                 }
                 if ($reader->localName === 'Okres') {
-                    $element = self::expand($reader);
-                    $districts[self::intChild($element, self::NS_DISTRICT, 'Kod')] = self::child($element, self::NS_DISTRICT, 'Nazev')->textContent;
+                    $element = Xml::expand($reader);
+                    $districts[Xml::intChild($element, self::NS_DISTRICT, 'Kod')] = Xml::child($element, self::NS_DISTRICT, 'Nazev')->textContent;
                 } elseif ($reader->localName === 'Obec') {
-                    $element = self::expand($reader);
+                    $element = Xml::expand($reader);
                     // Praha (554782) belongs to no district, so it has no <obi:Okres>.
-                    $district = self::optionalChild($element, self::NS_MUNICIPALITY, 'Okres');
+                    $district = Xml::optionalChild($element, self::NS_MUNICIPALITY, 'Okres');
                     if ($district === null) {
                         continue;
                     }
-                    $municipalities[self::intChild($district, self::NS_DISTRICT, 'Kod')][] = new Municipality(
-                        self::intChild($element, self::NS_MUNICIPALITY, 'Kod'),
-                        self::child($element, self::NS_MUNICIPALITY, 'Nazev')->textContent,
+                    $municipalities[Xml::intChild($district, self::NS_DISTRICT, 'Kod')][] = new Municipality(
+                        Xml::intChild($element, self::NS_MUNICIPALITY, 'Kod'),
+                        Xml::child($element, self::NS_MUNICIPALITY, 'Nazev')->textContent,
                     );
                 }
             }
@@ -55,42 +55,5 @@ final class AdministrativeUnitsReader
         }
 
         return new AdministrativeUnits($districts, $municipalities);
-    }
-
-    private static function expand(\XMLReader $reader): \DOMElement
-    {
-        $node = $reader->expand();
-        if (!$node instanceof \DOMElement) {
-            throw new \RuntimeException(sprintf('Cannot read element %s', $reader->name));
-        }
-
-        return $node;
-    }
-
-    private static function child(\DOMElement $parent, string $namespace, string $name): \DOMElement
-    {
-        return self::optionalChild($parent, $namespace, $name)
-            ?? throw new \RuntimeException(sprintf('Element %s has no child %s', $parent->nodeName, $name));
-    }
-
-    private static function optionalChild(\DOMElement $parent, string $namespace, string $name): ?\DOMElement
-    {
-        foreach ($parent->childNodes as $node) {
-            if ($node instanceof \DOMElement && $node->namespaceURI === $namespace && $node->localName === $name) {
-                return $node;
-            }
-        }
-
-        return null;
-    }
-
-    private static function intChild(\DOMElement $parent, string $namespace, string $name): int
-    {
-        $value = self::child($parent, $namespace, $name)->textContent;
-        if (!ctype_digit($value)) {
-            throw new \RuntimeException(sprintf('Element %s/%s is not a number: "%s"', $parent->nodeName, $name, $value));
-        }
-
-        return (int) $value;
     }
 }
