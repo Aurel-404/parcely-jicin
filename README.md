@@ -24,6 +24,26 @@ Pri prvom štarte sa automaticky spustí `composer install`. Hodnoty v `.env` ne
 
 Aplikácia beží na <http://localhost:8080>, stav na <http://localhost:8080/api/health>.
 
+## Stiahnutie dát
+
+```bash
+docker compose exec php php bin/download.php
+```
+
+Stiahne výmenný formát RÚIAN (VFR) z ČÚZK do `data/raw` (volume `raw-data`): súbor `OB_{kód}_UKSH`
+pre každú zo 111 obcí okresu, hranice okresu (`ST_UKSH`) a číselníky (`ST_UCIS`). Predvolene berie
+mesačnú sadu k poslednému dňu minulého mesiaca, iný dátum sa dá zadať cez `--date=RRRRMMDD`.
+Opakované spustenie už stiahnuté súbory preskočí. Prerušené sťahovanie pokračuje od súboru, kde skončilo.
+
+Zoznam obcí je v repe ([data/obce_okres_jicin.csv](data/obce_okres_jicin.csv)). Vznikol zo štátneho
+súboru `ST_UZSZ` a dá sa vygenerovať znova:
+
+```bash
+docker compose exec php php bin/list-obce.php
+```
+
+Skript skončí s chybou, ak nevyjde 111 obcí (oficiálny počet podľa ČSÚ).
+
 ## Vývoj
 
 ```bash
@@ -35,6 +55,8 @@ docker compose exec php composer cs      # kontrola štýlu (PER-CS); composer c
 ## Štruktúra
 
 ```
+bin/          CLI skripty (zoznam obcí, sťahovanie dát)
+data/         zoznam obcí okresu; data/raw = stiahnuté VFR (volume)
 db/init/      SQL spustené pri vytvorení databázy
 docker/       Dockerfile a konfigurácia PHP-FPM a nginx
 docs/         zápisník rozhodnutí a časový log
@@ -56,6 +78,9 @@ Kód sa do kontajnerov pripája z disku (bind mount). Stiahnuté dáta (`data/ra
 zdieľaný medzi `php` a `gdal`) a `var/` (volume `app-var`: cache dlaždíc, logy) sú v pomenovaných
 Docker volumes, lebo na Windows + WSL 2 je bind mount z disku Windowsu výrazne pomalší. Na disku
 ich preto neuvidíš, napríklad `docker compose exec php ls data/raw` ich vypíše.
+
+Príkazy v README sú pre PowerShell. V Git Bash treba pred príkazy s cestou typu `/vsizip/…` dať
+`MSYS_NO_PATHCONV=1`, inak ich Git Bash prepíše na cestu Windowsu.
 
 ## Zdroj dát
 
