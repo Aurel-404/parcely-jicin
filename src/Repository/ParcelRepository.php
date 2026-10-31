@@ -8,6 +8,7 @@ use Parcely\Database\Database;
 use Parcely\Database\Row;
 use Parcely\Domain\Building;
 use Parcely\Domain\CodeValue;
+use Parcely\Domain\LandTypeCount;
 use Parcely\Domain\ParcelDetail;
 use Parcely\Domain\ParcelLabel;
 use Parcely\Domain\ParcelSearchResult;
@@ -100,6 +101,27 @@ final readonly class ParcelRepository
             label: $row->string('label'),
             cadastralArea: new CodeValue($row->int('ku_kod'), $row->string('ku_nazev')),
             bbox: self::bbox($row),
+        ), $rows);
+    }
+
+    /**
+     * Kinds of land that occur in the district with their parcel counts, most frequent first.
+     *
+     * @return list<LandTypeCount>
+     */
+    public function countByLandType(): array
+    {
+        $rows = $this->db->fetchAll(
+            'SELECT d.kod, d.nazev, count(*) AS pocet
+             FROM parcel p
+             JOIN cis_druh_pozemku d ON d.kod = p.druh_pozemku_kod
+             GROUP BY d.kod, d.nazev
+             ORDER BY pocet DESC, d.kod',
+        );
+
+        return array_map(static fn(Row $row): LandTypeCount => new LandTypeCount(
+            new CodeValue($row->int('kod'), $row->string('nazev')),
+            $row->int('pocet'),
         ), $rows);
     }
 

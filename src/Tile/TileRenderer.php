@@ -20,7 +20,11 @@ final readonly class TileRenderer
 
     /**
      * Layer "parcels" with the minimum the map needs: feature id = parcel id (for feature-state hover and
-     * selection), label and druh_pozemku_kod. Everything else is loaded on click (/api/parcels/{id}).
+     * selection), druh_pozemku_kod and, at the deepest zoom only, label. Everything else is loaded on click
+     * (/api/parcels/{id}).
+     *
+     * The map shows parcel numbers from zoom 17, which it draws from the z16 tiles (overzoom), so a label in a
+     * tile below z16 would never be used (ST_AsMVT leaves NULL properties out).
      *
      * @return string MVT bytes, empty when no parcel intersects the tile
      */
@@ -30,7 +34,7 @@ final readonly class TileRenderer
             <<<'SQL'
                 WITH bounds AS (SELECT ST_TileEnvelope(:z, :x, :y) AS geom),
                 mvt AS (
-                    SELECT p.id, p.label, p.druh_pozemku_kod,
+                    SELECT p.id, CASE WHEN :with_label THEN p.label END AS label, p.druh_pozemku_kod,
                            ST_AsMVTGeom(p.geom, b.geom, :extent, :buffer, true) AS geom
                     FROM parcel p, bounds b
                     WHERE p.geom && b.geom
@@ -40,6 +44,7 @@ final readonly class TileRenderer
             // PDO cannot use one named parameter twice, hence extent and layer_extent.
             [
                 'z' => $tile->z, 'x' => $tile->x, 'y' => $tile->y,
+                'with_label' => $tile->z === TileCoordinate::MAX_ZOOM,
                 'extent' => self::EXTENT, 'buffer' => self::BUFFER, 'layer_extent' => self::EXTENT,
             ],
         );

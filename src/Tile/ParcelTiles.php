@@ -25,7 +25,12 @@ final readonly class ParcelTiles
         private TileRenderer $renderer,
         private TileCache $cache,
     ) {
-        $this->district = new Envelope(...self::DISTRICT_EXTENT);
+        $this->district = self::districtExtent();
+    }
+
+    public static function districtExtent(): Envelope
+    {
+        return new Envelope(...self::DISTRICT_EXTENT);
     }
 
     /**

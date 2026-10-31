@@ -53,6 +53,27 @@ final readonly class TileCoordinate
         return self::of((int) $z, (int) $x, (int) $y);
     }
 
+    /**
+     * All tiles of zoom $z that intersect $envelope, row by row.
+     *
+     * @return list<self>
+     */
+    public static function covering(Envelope $envelope, int $z): array
+    {
+        $size = self::of($z, 0, 0)->size();
+        $last = (1 << $z) - 1;
+        $index = static fn(float $offset): int => max(0, min($last, (int) floor($offset / $size)));
+
+        $tiles = [];
+        for ($y = $index(self::WORLD_HALF - $envelope->maxY); $y <= $index(self::WORLD_HALF - $envelope->minY); $y++) {
+            for ($x = $index($envelope->minX + self::WORLD_HALF); $x <= $index($envelope->maxX + self::WORLD_HALF); $x++) {
+                $tiles[] = new self($z, $x, $y);
+            }
+        }
+
+        return $tiles;
+    }
+
     /** Tile width in metres. */
     public function size(): float
     {

@@ -64,6 +64,21 @@ final class ApiTest extends IntegrationTestCase
         self::assertSame(sprintf('"%s-14-8892-5526"', $this->vfrDate()), $hit->headers['ETag']);
     }
 
+    public function testParcelNumbersOnlyInDeepestZoomTiles(): void
+    {
+        // The longest number in the tile: too long to turn up in the binary data by chance.
+        $label = $this->db->fetchValue(
+            'SELECT label FROM parcel WHERE geom && ST_TileEnvelope(16, 35569, 22104) ORDER BY length(label) DESC, id LIMIT 1',
+        );
+        self::assertIsString($label);
+
+        $deepest = self::content($this->get('/tiles/parcels/16/35569/22104.pbf'));
+        $parent = self::content($this->get('/tiles/parcels/15/17784/11052.pbf'));
+
+        self::assertStringContainsString($label, $deepest);
+        self::assertStringNotContainsString($label, $parent, 'the map draws numbers from z16 tiles only');
+    }
+
     public function testTileJsonVersionsTileUrlsByDataSet(): void
     {
         $tileJson = $this->json('/tiles/parcels.json');
@@ -122,6 +137,19 @@ final class ApiTest extends IntegrationTestCase
         self::assertSame('garáž', self::path($parcel, 'stavby', 0, 'zpusob_vyuziti', 'nazev'));
         self::assertSame(3, self::path($parcel, 'stavby', 0, 'typ', 'kod'));
         self::assertNull(self::path($parcel, 'stavby', 0, 'oznaceni'));
+    }
+
+    public function testLandTypesForLegendCountAllParcels(): void
+    {
+        $results = $this->json('/api/druhy-pozemku')['results'];
+        self::assertIsArray($results);
+
+        self::assertSame($this->db->fetchValue('SELECT count(*) FROM parcel'), array_sum(array_column($results, 'pocet')));
+        self::assertSame(
+            $this->db->fetchValue('SELECT nazev FROM cis_druh_pozemku WHERE kod = 10'),
+            array_column($results, 'nazev', 'kod')[10] ?? null,
+            'names come from the code list',
+        );
     }
 
     public function testUnknownParcelGives404(): void

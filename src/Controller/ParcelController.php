@@ -34,4 +34,12 @@ final readonly class ParcelController
 
         return Response::json($parcel, 200, self::CACHE);
     }
+
+    /**
+     * GET /api/druhy-pozemku: kinds of land in the district (code list names) with parcel counts, for the legend.
+     */
+    public function landTypes(): Response
+    {
+        return Response::json(['results' => $this->parcels->countByLandType()], 200, self::CACHE);
+    }
 }

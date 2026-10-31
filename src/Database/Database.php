@@ -108,7 +108,16 @@ final class Database
     private function execute(string $sql, array $params): PDOStatement
     {
         $statement = $this->pdo()->prepare($sql);
-        $statement->execute($params);
+        // Bound by type: execute($params) would send false as "", which PostgreSQL rejects as a boolean.
+        foreach ($params as $name => $value) {
+            $statement->bindValue(':' . $name, $value, match (true) {
+                is_bool($value) => PDO::PARAM_BOOL,
+                is_int($value) => PDO::PARAM_INT,
+                $value === null => PDO::PARAM_NULL,
+                default => PDO::PARAM_STR,
+            });
+        }
+        $statement->execute();
 
         return $statement;
     }
