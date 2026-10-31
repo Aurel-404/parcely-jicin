@@ -47,6 +47,7 @@ final readonly class Application
         $this->router->get('/tiles/parcels.json', $tiles->tileJson(...));
         $this->router->get('/tiles/parcels/{z}/{x}/{y}.pbf', $tiles->parcels(...));
         $this->router->get('/api/parcels/{id}', $parcel->detail(...));
+        $this->router->get('/api/druhy-pozemku', $parcel->landTypes(...));
         $this->router->get('/api/search', $search->parcels(...));
         $this->router->get('/api/ku', $search->cadastralAreas(...));
         $this->router->get('/api/boundaries.geojson', $boundary->geojson(...));

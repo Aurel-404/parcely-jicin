@@ -62,9 +62,32 @@ Dátum sady sa zapíše do tabuľky `meta` (`vfr_date`).
 - `--obec=572659` naimportuje len jednu obec (rýchla skúška, obec Jičín trvá 4 s).
 - Celý import trvá asi 50 s.
 
-Mesačná aktualizácia = `bin/download.php`, potom oba príkazy importu a nakoniec
-`docker compose exec php php bin/clear-cache.php` (zmaže cache starých sád, pozri nižšie). Schéma `staging`
-(surové vrstvy, 184 MB) po importe ostáva na kontrolu dát SQL dotazmi a ďalší import ju zahodí.
+Schéma `staging` (surové vrstvy, 184 MB) po importe ostáva na kontrolu dát SQL dotazmi a ďalší import ju
+zahodí.
+
+## Mesačná aktualizácia
+
+ČÚZK vydáva novú stavovú sadu VFR raz mesačne (dátum v názve = posledný deň predchádzajúceho mesiaca). Obnova
+sú štyri príkazy:
+
+```bash
+docker compose exec php php bin/download.php          # nová sada; ak ešte nie je vydaná, vezme poslednú dostupnú
+docker compose exec php php bin/import-codelists.php  # číselníky (ČÚZK mohol pridať kód)
+docker compose run --rm gdal bin/import.sh            # import najnovšej sady, asi 50 s
+docker compose exec php php bin/clear-cache.php       # zmaže cache predchádzajúcej sady
+```
+
+Čo sa pri tom deje:
+
+- `import.sh` vezme najnovší dátum v `data/raw` a skončí s chybou, ak preň chýba hoci jeden zo 111 súborov.
+  Transformácia beží v jednej transakcii, takže aplikácia až do konca ukazuje starú sadu a neúspešný import ju
+  nepokazí.
+- Na konci importu sa v tabuľke `meta` zmení `vfr_date`. Dlaždice a hranice sa odvtedy kreslia do nového
+  priečinka `var/tiles/{vfr_date}/` a TileJSON dá prehliadaču URL dlaždíc s novým `?v=`, takže nikto nedostane
+  dlaždicu zo starej sady. Import preto nemusí mazať cache, `clear-cache.php` len uvoľní miesto.
+- Ak by ČÚZK pridal do číselníka kód a `import-codelists.php` by sa nespustil, import skončí chybou cudzieho
+  kľúča (radšej chyba ako parcela bez názvu druhu).
+- Stiahnuté súbory starších mesiacov ostávajú vo volume `raw-data` (asi 92 MB na mesiac) a dajú sa zmazať.
 
 Výsledok pre sadu 20260930:
 
@@ -90,16 +113,56 @@ v [docs/vfr-schema.md](docs/vfr-schema.md).
   zavrie detail.
 - Hľadanie: katastrálne územie (s našepkávaním) a číslo, napr. `Jičín` + `st. 1868/26`.
 - Podklad: OpenStreetMap alebo ortofoto ČÚZK (voľba sa pamätá v prehliadači).
+- Parcely sú zafarbené podľa druhu pozemku. Legenda vľavo dole ukazuje názvy z číselníka ST_UCIS a počty
+  parciel; klik na druh zvýrazní len jeho parcely, zaškrtávacie pole farby vypne.
+- Texty v aplikácii sú po česky (dáta aj firma sú české).
 
 Frontend nemá build krok: [public/index.html](public/index.html), [public/assets/app.js](public/assets/app.js)
-(ES modul), [public/assets/app.css](public/assets/app.css). Externé zdroje (všetky overené, vracajú 200 a CORS):
+(ES modul), [public/assets/app.css](public/assets/app.css). Písmo pre popisky je v [public/fonts](public/fonts).
+Externé zdroje (všetky overené, vracajú 200 a CORS):
 
 | Zdroj | Na čo |
 |---|---|
 | `unpkg.com/maplibre-gl@5.24.0` | MapLibre GL JS 5.24.0, pripnutá verzia s kontrolou integrity (SRI) |
 | `tile.openstreetmap.org` | podklad OpenStreetMap; pre lokálny vývoj a ukážku, pri reálnej prevádzke by bol potrebný vlastný zdroj dlaždíc ([pravidlá](https://operations.osmfoundation.org/policies/tiles/)) |
 | `ags.cuzk.gov.cz/…/ORTOFOTO_WM/MapServer/tile/{z}/{y}/{x}` | ortofoto ČÚZK (pozor: y pred x) |
-| `demotiles.maplibre.org/font/…` | písmo pre popisky (Noto Sans, aj česká diakritika) |
+
+**Farby druhov pozemku.** Na mape sa dá s istotou rozlíšiť len pár farieb, aj pre ľudí s poruchou farebného
+videnia (overené validátorom palety). Preto majú vlastnú farbu len hlavné druhy, príbuzné druhy farbu zdieľajú
+(zahrada, ovocný sad, vinice, chmelnice) a ostatní plocha (najmä cesty: 27 tis. z 53 tis. parciel sú
+„ostatní komunikace“ alebo „silnice“) ostáva bez výplne. Druh sa vždy dá
+zistiť aj inak: každá parcela má obrys, legenda vie zvýrazniť jeden druh a detail parcely uvádza názov.
+
+## Výkon
+
+Benchmark vykreslí dlaždice nad celým okresom priamo cez `TileRenderer` (PostGIS `ST_AsMVT`), bez cache:
+
+```bash
+docker compose exec php php bin/bench.php    # --zoom=12-16 --sample=300
+```
+
+Výsledok pre sadu 20260930 (časy a veľkosti len z dlaždíc s parcelami; z16 = náhodná vzorka 300 z 9 243;
+„gz" = veľkosť po gzipe, ktorú prehliadač naozaj stiahne):
+
+| Zoom | Dlaždice | S dátami | p50 | p95 | max | priemer | max | max gz |
+|---|---|---|---|---|---|---|---|---|
+| 12 | 54 | 40 | 31,2 ms | 66,7 ms | 81,9 ms | 300 kB | **889 kB** | 565 kB |
+| **13** | 176 | 126 | 18,5 ms | 27,3 ms | 52,3 ms | 101 kB | 473 kB | 309 kB |
+| 14 | 630 | 437 | 6,1 ms | 15,3 ms | 29,8 ms | 32 kB | 247 kB | 169 kB |
+| 15 | 2 360 | 1 615 | 2,0 ms | 5,3 ms | 19,4 ms | 10 kB | 81 kB | 58 kB |
+| 16 | 300 / 9 243 | 201 | 1,0 ms | 2,7 ms | 6,5 ms | 4 kB | 18 kB | 13 kB |
+
+**`PARCEL_MIN_ZOOM` = 13**: najnižší zoom, kde p95 < 150 ms a najväčšia dlaždica < 500 kB. Čas vykreslenia je
+všade hlboko pod limitom, rozhoduje veľkosť: na z12 má najväčšia dlaždica 889 kB. Pomohlo jedno meranie: čísla
+parciel mapa kreslí až od zoomu 17, a to z dlaždíc z16, takže nižšie zoomy ich nepotrebujú. Bez nich klesla
+najväčšia dlaždica z13 zo 628 kB na 473 kB (bez toho by vyšiel zoom 14).
+
+- **Cache:** po prvom vykreslení sa dlaždica číta z disku (merané cez nginx: z14 7,5 ms namiesto 45 ms) a
+  prehliadač ju drží deň (`Cache-Control`, `ETag`, 304).
+- **gzip** v nginx, úroveň 5 (merané): hranice 2,2 MB → 626 kB (úroveň 1: 722 kB), najväčšia dlaždica z13
+  472 → 308 kB; vyššie úrovne ušetria menej ako 1 % a stoja niekoľkonásobok času.
+- **Písmo** pre popisky je lokálne (2 súbory, 42 a 53 kB po gzipe), mapa nezávisí od demo servera MapLibre.
+- **Prvé načítanie** nesťahuje žiadne parcely, len hranice (626 kB po gzipe) a dlaždice podkladu.
 
 ## API
 
@@ -153,12 +216,12 @@ sa prejavia po obnovení stránky, nginx ich posiela s `Cache-Control: no-cache`
 ## Štruktúra
 
 ```
-bin/          CLI skripty (zoznam obcí, sťahovanie, import číselníkov a VFR, mazanie starej cache)
+bin/          CLI skripty (zoznam obcí, sťahovanie, import číselníkov a VFR, mazanie cache, benchmark dlaždíc)
 data/         zoznam obcí okresu; data/raw = stiahnuté VFR (volume)
 db/           init/ = SQL pri vytvorení databázy, transform.sql = staging → tabuľky aplikácie
 docker/       Dockerfile a konfigurácia PHP-FPM, nginx a GDAL
 docs/         zápisník rozhodnutí, časový log, schéma VFR
-public/       front controller (index.php) a frontend (index.html, assets/app.js, assets/app.css)
+public/       front controller (index.php), frontend (index.html, assets/) a písmo popiskov (fonts/)
 src/          PHP kód (namespace Parcely\, PSR-4): Http, Controller (bez SQL), Repository a Tile/TileRenderer
               (jediné miesta so SQL), Tile (súradnice, cache), Domain (DTO, číslo parcely), Cli, Vfr, Download, Import
 tests/        PHPUnit testy
@@ -181,6 +244,10 @@ ich preto neuvidíš, napríklad `docker compose exec php ls data/raw` ich vypí
 Príkazy v README sú pre PowerShell. V Git Bash treba pred príkazy s cestou typu `/vsizip/…` dať
 `MSYS_NO_PATHCONV=1`, inak ich Git Bash prepíše na cestu Windowsu.
 
-## Zdroj dát
+## Zdroj dát a licencie
 
-Dáta RÚIAN © ČÚZK, licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Dáta RÚIAN © ČÚZK, licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Písmo popiskov v `public/fonts`: glyfy Noto Sans Regular (rozsahy 0–255 a 256–511, stačia na všetky znaky
+  názvov aj čísel parciel, najvyšší je ž) zo servera `demotiles.maplibre.org` projektu MapLibre, stiahnuté
+  2026-10-31. Písmo © The Noto Project Authors, licencia SIL Open Font License 1.1
+  ([public/fonts/OFL.txt](public/fonts/OFL.txt), z repozitára `google/fonts`).

@@ -3,8 +3,11 @@
 
 /* global maplibregl */
 
-/** Verified 2026-10-30: both ranges needed for Czech names (0-255, 256-511) return 200 with CORS. */
-const GLYPHS = 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf';
+/**
+ * Label glyphs served from public/fonts: only ranges 0-255 and 256-511 (all characters of the names and parcel
+ * numbers are below U+0200, the highest is ž). Absolute, because MapLibre may resolve it outside the page.
+ */
+const GLYPHS = `${window.location.origin}/fonts/{fontstack}/{range}.pbf`;
 const FONT = ['Noto Sans Regular'];
 
 /** Parcel numbers from this zoom; names of cadastral areas up to KU_LABEL_MAX_ZOOM. */
@@ -41,12 +44,27 @@ const BASEMAPS = {
   },
 };
 
+/**
+ * Fill colour by druh pozemku (codes of DruhyPozemku in ST_UCIS; the legend takes the names from the API).
+ * Hues of a palette validated for colour-blind readers. Nine kinds cannot all be told apart by colour on a map,
+ * so related kinds share a colour, ostatní plocha (roads, paths) keeps no fill, every parcel has an outline,
+ * and the legend can isolate one kind.
+ */
+const LAND_TYPE_COLORS = [
+  { codes: [2], color: '#eda100' }, // orná půda
+  { codes: [7, 8], color: '#1baf7a' }, // trvalý travní porost (two codes with the same name)
+  { codes: [10], color: '#008300' }, // lesní pozemek
+  { codes: [11], color: '#2a78d6' }, // vodní plocha
+  { codes: [13], color: '#e34948' }, // zastavěná plocha a nádvoří
+  { codes: [3, 4, 5, 6], color: '#e87ba4' }, // chmelnice, vinice, zahrada, ovocný sad
+];
+const COLORED_CODES = LAND_TYPE_COLORS.flatMap((group) => group.codes);
+
 /** The same format ParcelLabel::parse() accepts; checked here only to answer without a round trip. */
 const PARCEL_NUMBER = /^\s*(st\.?\s*)?\d{1,9}\s*(\/\s*\d{1,9})?\s*$/i;
 
-const PARCEL_LAYERS = ['parcels-fill', 'parcels-line'];
 const STORAGE_KEY = 'parcely.basemap';
-const NUMBER = new Intl.NumberFormat('sk-SK');
+const NUMBER = new Intl.NumberFormat('cs-CZ');
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -117,10 +135,54 @@ function maxBoundsAround([west, south, east, north]) {
   return [[min.lng, min.lat], [max.lng, max.lat]];
 }
 
+/** How parcels look: base map, colours by druh pozemku on/off, one isolated group (list of codes) or none. */
+const look = { basemap: 'osm', colors: true, isolated: null };
+
+const SELECTED = ['boolean', ['feature-state', 'selected'], false];
+const HOVER = ['boolean', ['feature-state', 'hover'], false];
+const LAND_TYPE = ['get', 'druh_pozemku_kod'];
+
+function fillColor() {
+  const accent = BASEMAPS[look.basemap].parcelColor;
+  if (!look.colors) {
+    return accent;
+  }
+  return ['match', LAND_TYPE, ...LAND_TYPE_COLORS.flatMap((group) => [group.codes, group.color]), accent];
+}
+
+function fillOpacity() {
+  // Colours are a little weaker on the photo, which is busy on its own.
+  const colored = look.basemap === 'orto' ? 0.35 : 0.45;
+  let base = look.colors ? ['match', LAND_TYPE, COLORED_CODES, colored, 0.05] : 0.05;
+  if (look.isolated !== null) {
+    base = ['match', LAND_TYPE, look.isolated, 0.6, 0.03];
+  }
+  return ['case', SELECTED, 0.7, HOVER, look.colors ? 0.65 : 0.22, base];
+}
+
+/** Applies `look` to a running map (base map switch, legend). */
+function applyLook(map) {
+  const { parcelColor, boundaryColor } = BASEMAPS[look.basemap];
+  for (const name of Object.keys(BASEMAPS)) {
+    map.setLayoutProperty(name, 'visibility', name === look.basemap ? 'visible' : 'none');
+  }
+  map.setPaintProperty('parcels-fill', 'fill-color', fillColor());
+  map.setPaintProperty('parcels-fill', 'fill-opacity', fillOpacity());
+  map.setPaintProperty('parcels-line', 'line-color', parcelColor);
+  map.setPaintProperty('ku-line', 'line-color', boundaryColor);
+  map.setPaintProperty('okres-line', 'line-color', boundaryColor);
+}
+
+function whenLoaded(map, fn) {
+  if (map.isStyleLoaded()) {
+    fn();
+  } else {
+    map.once('load', fn);
+  }
+}
+
 function buildStyle(tileJson) {
-  const selected = ['boolean', ['feature-state', 'selected'], false];
-  const hover = ['boolean', ['feature-state', 'hover'], false];
-  const { parcelColor, boundaryColor } = BASEMAPS.osm;
+  const { parcelColor, boundaryColor } = BASEMAPS[look.basemap];
   const ku = ['==', ['get', 'type'], 'ku'];
 
   return {
@@ -148,10 +210,7 @@ function buildStyle(tileJson) {
         type: 'fill',
         source: 'parcels',
         'source-layer': 'parcels',
-        paint: {
-          'fill-color': parcelColor,
-          'fill-opacity': ['case', selected, 0.38, hover, 0.22, 0.05],
-        },
+        paint: { 'fill-color': fillColor(), 'fill-opacity': fillOpacity() },
       },
       {
         id: 'parcels-line',
@@ -161,9 +220,9 @@ function buildStyle(tileJson) {
         paint: {
           'line-color': parcelColor,
           'line-width': ['interpolate', ['linear'], ['zoom'],
-            13, ['case', selected, 2, hover, 1.5, 0.3],
-            16, ['case', selected, 3, hover, 2, 0.8],
-            19, ['case', selected, 4, hover, 3, 1.6]],
+            13, ['case', SELECTED, 2, HOVER, 1.5, 0.3],
+            16, ['case', SELECTED, 3, HOVER, 2, 0.8],
+            19, ['case', SELECTED, 4, HOVER, 3, 1.6]],
           'line-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0.6, 15, 0.9],
         },
       },
@@ -215,8 +274,8 @@ async function main() {
     tileJson = await getJson('/tiles/parcels.json');
   } catch (error) {
     showFatal(error.status === 503
-      ? 'Dáta ešte nie sú naimportované. Postup je v README (bin/download.php, bin/import.sh).'
-      : 'Mapu sa nepodarilo načítať. Beží backend (docker compose up)?');
+      ? 'Data zatím nejsou naimportovaná. Postup je v README (bin/download.php, bin/import.sh).'
+      : 'Mapu se nepodařilo načíst. Běží backend (docker compose up)?');
     return;
   }
 
@@ -234,7 +293,8 @@ async function main() {
 
   const panel = createPanel(map);
   setUpBasemaps(map);
-  setUpZoomHint(map, tileJson.minzoom);
+  const updateZoomDependent = setUpZoomDependent(map, tileJson.minzoom);
+  setUpLegend(map, updateZoomDependent);
   setUpSearch(panel);
 
   map.on('load', () => {
@@ -272,7 +332,7 @@ function createPanel(map) {
 
   function renderSkeleton(id) {
     content.replaceChildren(el('div', { class: 'skeleton', 'aria-busy': 'true' },
-      el('h2', { id: 'panel-title', class: 'visually-hidden' }, `Načítavam parcelu ${id}`),
+      el('h2', { id: 'panel-title', class: 'visually-hidden' }, `Načítám parcelu ${id}`),
       el('span', { class: 'skeleton-title' }), el('span'), el('span'), el('span'), el('span')));
   }
 
@@ -284,7 +344,7 @@ function createPanel(map) {
     const row = (term, ...value) => [el('dt', {}, term), el('dd', {}, ...value)];
     const buildings = parcel.stavby.length > 0
       ? el('ul', { class: 'buildings' }, ...parcel.stavby.map((building) => el('li', {}, buildingText(building))))
-      : 'žiadna';
+      : 'žádná';
     const link = (href, text, className = 'button') => el('a', { class: className, href, target: '_blank', rel: 'noopener' }, text);
 
     content.replaceChildren(
@@ -292,11 +352,11 @@ function createPanel(map) {
         title(parcel.label),
         el('p', { class: 'panel-subtitle' }, `k. ú. ${parcel.ku.nazev}`)),
       el('dl', { class: 'facts' },
-        ...row('Katastrálne územie', `${parcel.ku.nazev} (${parcel.ku.kod})`),
+        ...row('Katastrální území', `${parcel.ku.nazev} (${parcel.ku.kod})`),
         ...row('Obec', parcel.obec.nazev),
-        ...row('Výmera', formatArea(parcel.vymera_m2)),
+        ...row('Výměra', formatArea(parcel.vymera_m2)),
         ...row('Druh pozemku', parcel.druh_pozemku?.nazev ?? '–'),
-        ...row('Spôsob využitia', parcel.zpusob_vyuziti?.nazev ?? '–'),
+        ...row('Způsob využití', parcel.zpusob_vyuziti?.nazev ?? '–'),
         ...row('Stavby', buildings)),
       el('div', { class: 'links' },
         link(parcel.links.nahlizeni_kn, 'Vlastníci v Nahlížení do KN'),
@@ -339,7 +399,7 @@ function createPanel(map) {
       }
       renderError(error.status === 404
         ? `Parcela ${id} v okrese Jičín neexistuje.`
-        : 'Detail parcely sa nepodarilo načítať. Skúste to znova.');
+        : 'Detail parcely se nepodařilo načíst. Zkuste to znovu.');
     }
     $('#panel-title')?.focus({ preventScroll: true });
   }
@@ -428,25 +488,11 @@ function setUpBasemaps(map) {
   const buttons = [...document.querySelectorAll('#basemaps button')];
 
   function use(name) {
-    const basemap = BASEMAPS[name];
     for (const button of buttons) {
       button.setAttribute('aria-pressed', String(button.dataset.basemap === name));
     }
-    const apply = () => {
-      for (const other of Object.keys(BASEMAPS)) {
-        map.setLayoutProperty(other, 'visibility', other === name ? 'visible' : 'none');
-      }
-      for (const layer of PARCEL_LAYERS) {
-        map.setPaintProperty(layer, layer === 'parcels-fill' ? 'fill-color' : 'line-color', basemap.parcelColor);
-      }
-      map.setPaintProperty('ku-line', 'line-color', basemap.boundaryColor);
-      map.setPaintProperty('okres-line', 'line-color', basemap.boundaryColor);
-    };
-    if (map.isStyleLoaded()) {
-      apply();
-    } else {
-      map.once('load', apply);
-    }
+    look.basemap = name;
+    whenLoaded(map, () => applyLook(map));
     try {
       window.localStorage.setItem(STORAGE_KEY, name);
     } catch {
@@ -469,13 +515,79 @@ function setUpBasemaps(map) {
   }
 }
 
-function setUpZoomHint(map, minZoom) {
+/** Below the minimum zoom of the parcels a hint, from it on the legend. */
+function setUpZoomDependent(map, minZoom) {
   const hint = $('#zoom-hint');
+  const legend = $('#legend');
   const update = () => {
-    hint.hidden = map.getZoom() >= minZoom;
+    const parcelsVisible = map.getZoom() >= minZoom;
+    hint.hidden = parcelsVisible;
+    legend.hidden = !parcelsVisible || legend.dataset.ready !== 'true';
   };
   map.on('zoom', update);
   update();
+  return update;
+}
+
+/**
+ * Legend of the colours by druh pozemku: one row per colour (kinds sharing a colour are listed together),
+ * names from the code list via the API. A click isolates one row, the checkbox turns the colours off.
+ */
+async function setUpLegend(map, onReady) {
+  const legend = $('#legend');
+  const toggle = $('#legend-colors');
+  legend.open = !window.matchMedia('(max-width: 767px)').matches;
+
+  let types;
+  try {
+    ({ results: types } = await getJson('/api/druhy-pozemku'));
+  } catch {
+    return; // The map works without a legend.
+  }
+
+  const rows = [];
+  for (const type of types) {
+    const group = LAND_TYPE_COLORS.find((candidate) => candidate.codes.includes(type.kod));
+    let row = group === undefined ? undefined : rows.find((candidate) => candidate.group === group);
+    if (row === undefined) {
+      row = { group, codes: group?.codes ?? [type.kod], names: [], count: 0 };
+      rows.push(row);
+    }
+    if (!row.names.includes(type.nazev)) {
+      row.names.push(type.nazev);
+    }
+    row.count += type.pocet;
+  }
+  rows.sort((a, b) => b.count - a.count);
+
+  const buttons = rows.map((row) => {
+    const swatch = el('span', { class: row.group ? 'legend-swatch' : 'legend-swatch legend-swatch-none', 'aria-hidden': 'true' });
+    if (row.group) {
+      swatch.style.background = row.group.color;
+    }
+    const button = el('button', { type: 'button', 'aria-pressed': 'false', title: 'Zvýraznit jen tento druh' },
+      swatch, el('span', { class: 'legend-name' }, row.names.join(', ')), el('span', { class: 'legend-count' }, NUMBER.format(row.count)));
+    button.addEventListener('click', () => {
+      const wasActive = button.getAttribute('aria-pressed') === 'true';
+      for (const other of buttons) {
+        other.setAttribute('aria-pressed', 'false');
+      }
+      button.setAttribute('aria-pressed', String(!wasActive));
+      look.isolated = wasActive ? null : row.codes;
+      whenLoaded(map, () => applyLook(map));
+    });
+    return button;
+  });
+  $('#legend-items').replaceChildren(...buttons.map((button) => el('li', {}, button)));
+
+  toggle.addEventListener('change', () => {
+    look.colors = toggle.checked;
+    legend.classList.toggle('legend-off', !toggle.checked);
+    whenLoaded(map, () => applyLook(map));
+  });
+
+  legend.dataset.ready = 'true';
+  onReady();
 }
 
 function setUpSearch(panel) {
@@ -536,33 +648,33 @@ function setUpSearch(panel) {
     const number = numberInput.value.trim();
     results.hidden = true;
     if (ku === '' || number === '') {
-      setStatus('Zadajte katastrálne územie aj číslo parcely.');
+      setStatus('Zadejte katastrální území i číslo parcely.');
       (ku === '' ? kuInput : numberInput).focus();
       return;
     }
 
     if (!PARCEL_NUMBER.test(number)) {
-      setStatus('Číslo parcely zadajte ako 123, 123/4 alebo st. 123/4.');
+      setStatus('Číslo parcely zadejte jako 123, 123/4 nebo st. 123/4.');
       numberInput.focus();
       return;
     }
 
-    setStatus('Hľadám…');
+    setStatus('Hledám…');
     try {
       const { results: found } = await getJson(`/api/search?ku=${encodeURIComponent(ku)}&cislo=${encodeURIComponent(number)}`);
       if (found.length === 0) {
-        setStatus(`V k. ú. „${ku}“ sa parcela ${number} nenašla. Vyberte k. ú. z ponuky a skontrolujte číslo.`);
+        setStatus(`V k. ú. „${ku}“ se parcela ${number} nenašla. Vyberte k. ú. z nabídky a zkontrolujte číslo.`);
       } else if (found.length === 1) {
         setStatus('');
         panel.open(found[0].id);
       } else {
-        setStatus(found.length === 10 ? 'Prvých 10 parciel:' : `Nájdené parcely (${found.length}):`);
+        setStatus(found.length === 10 ? 'Prvních 10 parcel:' : `Nalezené parcely (${found.length}):`);
         showResults(found);
       }
     } catch (error) {
       setStatus(error.status === 400
-        ? 'Číslo parcely zadajte ako 123, 123/4 alebo st. 123/4.'
-        : 'Hľadanie zlyhalo, skúste to znova.');
+        ? 'Číslo parcely zadejte jako 123, 123/4 nebo st. 123/4.'
+        : 'Hledání selhalo, zkuste to znovu.');
     }
   });
 

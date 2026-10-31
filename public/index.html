@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="sk">
+<html lang="cs">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Mapa všetkých parciel okresu Jičín (RÚIAN, ČÚZK)">
+  <meta name="description" content="Mapa všech parcel okresu Jičín (RÚIAN, ČÚZK)">
   <title>Parcely okresu Jičín</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 3l6-2 8 3-2 11-9-2z' fill='%23c2410c'/%3E%3C/svg%3E">
   <!-- MapLibre GL JS 5.24.0 (UMD build), pinned; integrity = SHA-384 of the files on unpkg. -->
@@ -16,16 +16,16 @@
   <script src="/assets/app.js" type="module"></script>
 </head>
 <body>
-  <div id="map" aria-label="Mapa parciel okresu Jičín"></div>
+  <div id="map" aria-label="Mapa parcel okresu Jičín"></div>
 
   <form id="search" class="search" role="search" autocomplete="off" novalidate>
     <div class="search-row">
-      <input id="search-ku" name="ku" list="ku-options" placeholder="Katastrálne územie" aria-label="Katastrálne územie"
+      <input id="search-ku" name="ku" list="ku-options" placeholder="Katastrální území" aria-label="Katastrální území"
              enterkeyhint="next">
       <datalist id="ku-options"></datalist>
-      <input id="search-number" name="cislo" placeholder="Číslo, napr. st. 123/4" aria-label="Číslo parcely"
+      <input id="search-number" name="cislo" placeholder="Číslo, např. st. 123/4" aria-label="Číslo parcely"
              enterkeyhint="search">
-      <button type="submit" class="search-submit" aria-label="Hľadať parcelu">
+      <button type="submit" class="search-submit" aria-label="Hledat parcelu">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
       </button>
     </div>
@@ -33,19 +33,26 @@
     <ul id="search-results" class="search-results" hidden></ul>
   </form>
 
-  <div id="basemaps" class="basemaps" role="group" aria-label="Podklad mapy">
+  <div id="basemaps" class="basemaps" role="group" aria-label="Podkladová mapa">
     <button type="button" data-basemap="osm" aria-pressed="true">Mapa</button>
     <button type="button" data-basemap="orto" aria-pressed="false">Ortofoto</button>
   </div>
 
-  <p id="zoom-hint" class="zoom-hint" hidden>Priblížte mapu pre zobrazenie parciel</p>
+  <p id="zoom-hint" class="zoom-hint" hidden>Přibližte mapu pro zobrazení parcel</p>
+
+  <details id="legend" class="legend" hidden>
+    <summary>Druh pozemku</summary>
+    <label class="legend-colors"><input type="checkbox" id="legend-colors" checked> Barevně podle druhu</label>
+    <ul id="legend-items" class="legend-items"></ul>
+    <p class="legend-note">Kliknutím zvýrazníte jeden druh. Čísla jsou počty parcel.</p>
+  </details>
 
   <aside id="panel" class="panel" aria-labelledby="panel-title" hidden>
-    <button type="button" class="panel-close" aria-label="Zavrieť detail parcely">&times;</button>
+    <button type="button" class="panel-close" aria-label="Zavřít detail parcely">&times;</button>
     <div id="panel-content"></div>
   </aside>
 
   <div id="fatal" class="fatal" role="alert" hidden></div>
-  <noscript><div class="fatal">Mapa potrebuje JavaScript.</div></noscript>
+  <noscript><div class="fatal">Mapa potřebuje JavaScript.</div></noscript>
 </body>
 </html>

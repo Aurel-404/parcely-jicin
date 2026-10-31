@@ -45,6 +45,13 @@ final readonly class Row
         return $value;
     }
 
+    public function bool(string $column): bool
+    {
+        $value = $this->value($column);
+
+        return is_bool($value) ? $value : throw self::unexpected($column, 'bool');
+    }
+
     public function float(string $column): float
     {
         $value = $this->value($column);

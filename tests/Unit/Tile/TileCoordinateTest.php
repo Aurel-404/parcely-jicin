@@ -58,6 +58,27 @@ final class TileCoordinateTest extends TestCase
         self::assertEqualsWithDelta(6520995.757064957, $envelope->maxY, 1e-6);
     }
 
+    public function testCoveringReturnsTilesThatIntersectTheEnvelope(): void
+    {
+        $tile = TileCoordinate::of(14, 8892, 5526);
+        $inside = $tile->envelope()->expand(-1.0);
+        $around = $tile->envelope()->expand(1.0);
+
+        self::assertEquals([$tile], TileCoordinate::covering($inside, 14));
+        $neighbours = array_map(static fn(TileCoordinate $t): string => $t->path(), TileCoordinate::covering($around, 14));
+        self::assertSame(
+            ['14/8891/5525', '14/8892/5525', '14/8893/5525', '14/8891/5526', '14/8892/5526', '14/8893/5526', '14/8891/5527', '14/8892/5527', '14/8893/5527'],
+            $neighbours,
+        );
+    }
+
+    public function testCoveringStaysInsideTheWorld(): void
+    {
+        $world = TileCoordinate::of(0, 0, 0)->envelope()->expand(1000.0);
+
+        self::assertCount(4, TileCoordinate::covering($world, 1));
+    }
+
     public function testZoomZeroCoversTheWorld(): void
     {
         $envelope = TileCoordinate::of(0, 0, 0)->envelope();
