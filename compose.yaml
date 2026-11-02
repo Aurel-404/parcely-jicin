@@ -55,8 +55,10 @@ services:
     volumes:
       - ./public:/app/public:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    # Until the first composer install has finished, nginx would answer 502.
     depends_on:
-      - php
+      php:
+        condition: service_healthy
 
   # One-off tool for importing RÚIAN VFR data (GML driver + RÚIAN .gfs templates + PostgreSQL driver + psql):
   #   docker compose run --rm gdal bin/import.sh
