@@ -1,6 +1,7 @@
 -- Builds the application tables from the raw VFR layers in schema staging (loaded by bin/import.sh).
--- bin/import.sh runs it in one transaction (psql -1 -v vfr_date=YYYYMMDD): the application keeps serving the
--- previous data until COMMIT, and a failed import leaves it untouched.
+-- bin/import.sh runs it in one transaction (psql -1 -v vfr_date=YYYYMMDD): nobody sees half-imported data and a
+-- failed import leaves the previous data untouched. DROP TABLE locks these tables and the referenced code lists
+-- until COMMIT, so API requests and uncached tiles wait for the transform (~13 s); cached tiles are still served.
 --
 -- VFR geometries are in S-JTSK / Krovak East North (EPSG:5514). The tables store Web Mercator (EPSG:3857),
 -- the projection of vector tiles, so a tile request does not reproject anything.
