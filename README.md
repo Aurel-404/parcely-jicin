@@ -15,13 +15,13 @@ a asi 3 GB miesta. PHP 8.3, PostgreSQL 18 s PostGIS 3.6, nginx aj GDAL bežia v 
 inštalovať netreba.
 
 ```bash
-git clone <repo>
+git clone https://github.com/Aurel-404/parcely-jicin.git
 cd parcely-jicin
 cp .env.example .env
-docker compose up -d --build --wait                  # prvý štart: composer install, asi 3 min
-docker compose exec php php bin/download.php          # stiahne dáta 111 obcí okresu (92 MB, asi 1 min)
+docker compose up -d --build --wait                  # prvý štart, asi 3 min
+docker compose exec php php bin/download.php          # dáta 111 obcí, asi 1 min
 docker compose exec php php bin/import-codelists.php  # číselníky ČÚZK
-docker compose run --rm gdal bin/import.sh            # import do databázy, asi 1 min
+docker compose run --rm gdal bin/import.sh            # import, asi 1 min
 # otvor http://localhost:8080
 ```
 
